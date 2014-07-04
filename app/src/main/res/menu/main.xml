@@ -1,11 +1,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity" >
-    <item android:id="@+id/action_file"
-        android:title="File"
+    <item android:id="@+id/action_add"
+        android:title="Add"
         android:showAsAction="always"/>
-    <item android:id="@+id/action_music"
-        android:title="Music"
+    <item android:id="@+id/action_test"
+        android:title="Test"
         android:showAsAction="always"/>
 
 </menu>

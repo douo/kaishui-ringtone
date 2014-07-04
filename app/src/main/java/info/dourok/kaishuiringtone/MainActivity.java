@@ -1,27 +1,82 @@
 package info.dourok.kaishuiringtone;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
-import android.media.Ringtone;
+import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Toast;
+import android.webkit.MimeTypeMap;
+
+import com.ipaulpro.afilechooser.FileChooserActivity;
+import com.ipaulpro.afilechooser.utils.FileUtils;
+
+import java.io.File;
 
 
-public class MainActivity extends Activity implements View.OnClickListener{
+public class MainActivity extends Activity {
 
     private static final int RQ_CHOOSING_FILE = 0x123;
-
+    private  RingtoneManager mRingtoneManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        findViewById(R.id.button).setOnClickListener(this);
+        mRingtoneManager = new RingtoneManager(this);
+        //dumpRM();
+    }
+
+    private void dumpRM(){
+        d("TYPE_RINGTONE:"+RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
+        d(RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_RINGTONE));
+        d("TYPE_NOTIFICATION:"+RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+        d(RingtoneManager.getActualDefaultRingtoneUri(this,RingtoneManager.TYPE_NOTIFICATION));
+        d("TYPE_ALARM:"+RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
+        d(RingtoneManager.getActualDefaultRingtoneUri(this,RingtoneManager.TYPE_ALARM));
+        mRingtoneManager.setType(RingtoneManager.TYPE_ALL);
+        Cursor cursor = mRingtoneManager.getCursor();
+        while(cursor.moveToNext()){
+            int c = cursor.getColumnCount();
+            for(int i=0;i< c;i++){
+                String name = cursor.getColumnName(i);
+                String value = cursor.getString(i);
+                d(name+":"+value);
+            }
+        }
+    }
+
+    private void queryMediaRingtones(){
+        Cursor managedCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,
+                constructBooleanTrueWhereClause(new String[]{MediaStore.Audio.AudioColumns.IS_RINGTONE,MediaStore.Audio.AudioColumns.IS_NOTIFICATION,MediaStore.Audio.AudioColumns.IS_ALARM}), null,
+                MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
+    }
+
+    private static String constructBooleanTrueWhereClause(String [] columns) {
+
+        if (columns == null) return null;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("(");
+
+        for (int i = columns.length - 1; i >= 0; i--) {
+            sb.append(columns[i]).append("=1 or ");
+        }
+
+        if (columns.length > 0) {
+            // Remove last ' or '
+            sb.setLength(sb.length() - 4);
+        }
+
+        sb.append(")");
+
+        return sb.toString();
     }
 
 
@@ -34,31 +89,53 @@ public class MainActivity extends Activity implements View.OnClickListener{
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_file) {
-            chooseFile();
-            return true;
+        switch (item.getItemId()){
+            case R.id.action_add:
+                chooseFile();
+                return true;
+            case R.id.action_test:
+                testRingtonePicker();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     private void chooseFile(){
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("file/*");
-        startActivityForResult(intent, RQ_CHOOSING_FILE);
+        Intent getContentIntent = new Intent(this,FileChooserActivity.class);
+        startActivityForResult(getContentIntent, RQ_CHOOSING_FILE);
     }
 
-    @Override
-    public void onClick(View v) {
-        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-        r.play();
+    private Uri insertRingtoneAudio(Uri fileUri){
+        String path = FileUtils.getPath(this, fileUri);
+        if (path != null && FileUtils.isLocal(path)) {
+            File file = new File(path);
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            MimeTypeMap mtm =  MimeTypeMap.getSingleton();
+            mmr.setDataSource(file.getAbsolutePath());
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DATA, file.getAbsolutePath());
+            values.put(MediaStore.MediaColumns.TITLE, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+            values.put(MediaStore.MediaColumns.SIZE, file.length());
+            values.put(MediaStore.MediaColumns.MIME_TYPE,  mtm.getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(file.toURI().toString())));
+            values.put(MediaStore.Audio.Media.ARTIST, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
+            values.put(MediaStore.Audio.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+            values.put(MediaStore.Audio.Media.IS_RINGTONE, true);
+            values.put(MediaStore.Audio.Media.IS_NOTIFICATION, true);
+            values.put(MediaStore.Audio.Media.IS_ALARM, true);
+            values.put(MediaStore.Audio.Media.IS_MUSIC, true);
+            Uri uri = MediaStore.Audio.Media.getContentUriForPath(file.getAbsolutePath());
+            d("content:"+uri);
+            //删除原有data
+            getContentResolver().delete(uri, MediaStore.MediaColumns.DATA + "=\"" + file.getAbsolutePath() + "\"", null);
+            Uri newUri = getContentResolver().insert(uri, values);
+            d("new:"+newUri);
+            return newUri;
+        }
+        return null;
     }
 
-    private void onpenChooser(){
+    private void testRingtonePicker(){
         Intent intent = new Intent(
                 RingtoneManager.ACTION_RINGTONE_PICKER);
 
@@ -87,23 +164,18 @@ public class MainActivity extends Activity implements View.OnClickListener{
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK) {
-            return;
-        } else {
-            // 得到我们选择的铃声,如果选择的是"静音"，那么将会返回null
-            Uri uri = data
-                    .getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
-
-            Toast.makeText(this, uri + "", Toast.LENGTH_SHORT).show();
-            if (uri != null) {
-                switch (requestCode) {
-                    case 0x12:
-                        RingtoneManager.setActualDefaultRingtoneUri(this,
-                                RingtoneManager.TYPE_ALARM, uri);
-                        break;
+        switch (requestCode) {
+            case RQ_CHOOSING_FILE:
+                if (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    insertRingtoneAudio(uri);
                 }
-            }
+                break;
         }
+    }
+
+    private static final String TAG = "KAISHUI_RINGTONE";
+    private void d(Object obj){
+        Log.d(TAG,obj == null?"null":obj.toString());
     }
 }
