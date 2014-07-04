@@ -1,11 +1,11 @@
 package info.dourok.kaishuiringtone;
 
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
+import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,7 +13,11 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.MimeTypeMap;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.ipaulpro.afilechooser.FileChooserActivity;
 import com.ipaulpro.afilechooser.utils.FileUtils;
@@ -21,15 +25,20 @@ import com.ipaulpro.afilechooser.utils.FileUtils;
 import java.io.File;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener{
 
     private static final int RQ_CHOOSING_FILE = 0x123;
     private  RingtoneManager mRingtoneManager;
+    private ListView mListView;
+    private RingtoneCursorAdapter mAdapter;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mListView = (ListView) findViewById(R.id.listView);
+        mListView.setOnItemClickListener(this);
         mRingtoneManager = new RingtoneManager(this);
+        queryMediaRingtones();
         //dumpRM();
     }
 
@@ -56,6 +65,15 @@ public class MainActivity extends Activity {
         Cursor managedCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,
                 constructBooleanTrueWhereClause(new String[]{MediaStore.Audio.AudioColumns.IS_RINGTONE,MediaStore.Audio.AudioColumns.IS_NOTIFICATION,MediaStore.Audio.AudioColumns.IS_ALARM}), null,
                 MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
+        mAdapter = new RingtoneCursorAdapter(this,managedCursor);
+        mListView.setAdapter(mAdapter);
+    }
+
+    private void refresh(){
+        Cursor managedCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,
+                constructBooleanTrueWhereClause(new String[]{MediaStore.Audio.AudioColumns.IS_RINGTONE,MediaStore.Audio.AudioColumns.IS_NOTIFICATION,MediaStore.Audio.AudioColumns.IS_ALARM}), null,
+                MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
+        mAdapter.changeCursor(managedCursor);
     }
 
     private static String constructBooleanTrueWhereClause(String [] columns) {
@@ -130,6 +148,7 @@ public class MainActivity extends Activity {
             getContentResolver().delete(uri, MediaStore.MediaColumns.DATA + "=\"" + file.getAbsolutePath() + "\"", null);
             Uri newUri = getContentResolver().insert(uri, values);
             d("new:"+newUri);
+            refresh();
             return newUri;
         }
         return null;
@@ -174,8 +193,47 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(r !=null){
+            r.stop();
+        }
+
+    }
+
     private static final String TAG = "KAISHUI_RINGTONE";
+    Ringtone r ;
+    Uri uri;
     private void d(Object obj){
-        Log.d(TAG,obj == null?"null":obj.toString());
+        Log.d(TAG, obj == null ? "null" : obj.toString());
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Cursor cursor = (Cursor) mAdapter.getItem(position);
+        for(int i =0;i<cursor.getColumnCount();i++){
+            d(cursor.getColumnName(i) + ":" + cursor.getString(i));
+        }
+        if(r!=null){
+            r.stop();
+            r = null;
+        }
+
+        Uri _uri = Uri.withAppendedPath( MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)));
+        if(!_uri.equals(uri)){
+            uri = _uri;
+            r = RingtoneManager.getRingtone(this, uri);
+            try {
+                r.play();
+            }catch (Exception e){
+                e.printStackTrace();
+                Toast.makeText(this,e.getMessage(),Toast.LENGTH_SHORT).show();
+            }
+        }else{
+            uri = null;
+        }
+
+
     }
 }
