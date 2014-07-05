@@ -3,6 +3,7 @@ package info.dourok.kaishuiringtone;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -18,6 +19,17 @@ import java.io.File;
  * Created by charry on 2014/7/5.
  */
 public class RingtoneHelper {
+    public final static String[] RINGTONE_PROJECTION = new String[] {
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.DURATION,
+            MediaStore.Audio.Media.IS_RINGTONE,
+            MediaStore.Audio.Media.IS_MUSIC,
+            MediaStore.Audio.Media.IS_NOTIFICATION,
+            MediaStore.Audio.Media.IS_ALARM
+    };
+
     private Context mContext;
     private MediaMetadataRetriever mmr = new MediaMetadataRetriever();
     public RingtoneHelper(Context context) {
@@ -55,6 +67,13 @@ public class RingtoneHelper {
         d("new:" + newUri);
         return newUri;
     }
+
+    private Cursor getRingtoneByData(File file){
+        
+        Uri uri = MediaStore.Audio.Media.getContentUriForPath(file.getAbsolutePath());
+        return mContext.getContentResolver().query(uri,RINGTONE_PROJECTION,MediaStore.MediaColumns.DATA + "=\"" + file.getAbsolutePath() + "\"",null,null);
+    }
+
     public static Intent createChooseRingtoneFileIntent(Context context){
         Intent intent = new Intent(context,FileChooserActivity.class);
         intent.setType("audio/*");

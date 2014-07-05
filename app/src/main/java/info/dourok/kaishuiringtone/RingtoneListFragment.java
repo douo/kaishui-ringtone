@@ -174,7 +174,7 @@ public class RingtoneListFragment extends ListFragment implements LoaderManager.
     public Loader onCreateLoader(int id, Bundle args) {
         String whereClause = constructBooleanTrueWhereClause(new String[]{MediaStore.Audio.AudioColumns.IS_RINGTONE,MediaStore.Audio.AudioColumns.IS_NOTIFICATION,MediaStore.Audio.AudioColumns.IS_ALARM});
         return  new CursorLoader(getActivity(), MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                RingtoneCursorAdapter.RINGTONE_PROJECTION, whereClause, null,
+                RingtoneHelper.RINGTONE_PROJECTION, whereClause, null,
                 MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
     }
 
