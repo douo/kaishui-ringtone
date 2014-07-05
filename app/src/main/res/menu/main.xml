@@ -3,9 +3,10 @@
     tools:context=".MainActivity" >
     <item android:id="@+id/action_add"
         android:title="Add"
+        android:icon="@drawable/ic_action_new"
         android:showAsAction="always"/>
     <item android:id="@+id/action_test"
         android:title="Test"
-        android:showAsAction="always"/>
+        android:showAsAction="never"/>
 
 </menu>

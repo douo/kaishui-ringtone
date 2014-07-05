@@ -122,6 +122,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     private void chooseFile(){
         Intent getContentIntent = new Intent(this,FileChooserActivity.class);
         getContentIntent.setType("audio/*");
+        getContentIntent.putExtra(FileChooserActivity.KEY_FILTER_BY_MIME_TYPE,true);
         startActivityForResult(getContentIntent, RQ_CHOOSING_FILE);
     }
 
