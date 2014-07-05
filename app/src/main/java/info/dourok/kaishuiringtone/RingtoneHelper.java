@@ -2,12 +2,14 @@ package info.dourok.kaishuiringtone;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import com.ipaulpro.afilechooser.FileChooserActivity;
 import com.ipaulpro.afilechooser.utils.FileUtils;
 
 import java.io.File;
@@ -52,6 +54,12 @@ public class RingtoneHelper {
         Uri newUri = mContext.getContentResolver().insert(uri, values);
         d("new:" + newUri);
         return newUri;
+    }
+    public static Intent createChooseRingtoneFileIntent(Context context){
+        Intent intent = new Intent(context,FileChooserActivity.class);
+        intent.setType("audio/*");
+        intent.putExtra(FileChooserActivity.KEY_FILTER_BY_MIME_TYPE, true);
+        return intent;
     }
 
     private void d(Object obj) {

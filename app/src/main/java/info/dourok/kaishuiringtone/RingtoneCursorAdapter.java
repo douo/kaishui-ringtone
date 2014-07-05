@@ -13,6 +13,16 @@ import android.widget.TextView;
  * Created by charry on 2014/7/4.
  */
 public class RingtoneCursorAdapter extends CursorAdapter{
+    public final static String[] RINGTONE_PROJECTION = new String[] {
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.DURATION,
+            MediaStore.Audio.Media.IS_RINGTONE,
+            MediaStore.Audio.Media.IS_MUSIC,
+            MediaStore.Audio.Media.IS_NOTIFICATION,
+            MediaStore.Audio.Media.IS_ALARM
+    };
 
     public RingtoneCursorAdapter(Context context,Cursor cursor){
         super(context,cursor);
