@@ -31,6 +31,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     private  RingtoneManager mRingtoneManager;
     private ListView mListView;
     private RingtoneCursorAdapter mAdapter;
+    private RingtoneHelper mRingtoneHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -38,6 +39,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         mListView = (ListView) findViewById(R.id.listView);
         mListView.setOnItemClickListener(this);
         mRingtoneManager = new RingtoneManager(this);
+        mRingtoneHelper = new RingtoneHelper(this);
         queryMediaRingtones();
         //dumpRM();
     }
@@ -126,35 +128,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         startActivityForResult(getContentIntent, RQ_CHOOSING_FILE);
     }
 
-    private Uri insertRingtoneAudio(Uri fileUri){
-        String path = FileUtils.getPath(this, fileUri);
-        if (path != null && FileUtils.isLocal(path)) {
-            File file = new File(path);
-            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-            MimeTypeMap mtm =  MimeTypeMap.getSingleton();
-            mmr.setDataSource(file.getAbsolutePath());
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.MediaColumns.DATA, file.getAbsolutePath());
-            values.put(MediaStore.MediaColumns.TITLE, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
-            values.put(MediaStore.MediaColumns.SIZE, file.length());
-            values.put(MediaStore.MediaColumns.MIME_TYPE,  mtm.getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(file.toURI().toString())));
-            values.put(MediaStore.Audio.Media.ARTIST, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
-            values.put(MediaStore.Audio.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-            values.put(MediaStore.Audio.Media.IS_RINGTONE, true);
-            values.put(MediaStore.Audio.Media.IS_NOTIFICATION, true);
-            values.put(MediaStore.Audio.Media.IS_ALARM, true);
-            values.put(MediaStore.Audio.Media.IS_MUSIC, true);
-            Uri uri = MediaStore.Audio.Media.getContentUriForPath(file.getAbsolutePath());
-            d("content:"+uri);
-            //删除原有data
-            getContentResolver().delete(uri, MediaStore.MediaColumns.DATA + "=\"" + file.getAbsolutePath() + "\"", null);
-            Uri newUri = getContentResolver().insert(uri, values);
-            d("new:"+newUri);
-            refresh();
-            return newUri;
-        }
-        return null;
-    }
+
 
     private void testRingtonePicker(){
         Intent intent = new Intent(
@@ -185,11 +159,13 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+       d(LogUtils.dumpIntent(data));
         switch (requestCode) {
             case RQ_CHOOSING_FILE:
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
-                    insertRingtoneAudio(uri);
+                    mRingtoneHelper.insertRingtoneAudio(uri);
+                    refresh();
                 }
                 break;
         }
@@ -238,4 +214,5 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
 
     }
+
 }

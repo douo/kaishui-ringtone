@@ -16,23 +16,23 @@
             android:label="@string/choose_file" >
         </activity>
         <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-        </activity>
-        <activity
-            android:name=".QuickRingtonePickerActivity"
+            android:name=".RingtonePicker"
             android:label="@string/title_activity_quick_ringtone_picker" >
             <intent-filter>
                 <action android:name="android.intent.action.RINGTONE_PICKER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>

@@ -203,6 +203,10 @@ public class FileChooserActivity extends FragmentActivity implements
         }
     }
 
+    public void setFilterByMimeType(boolean filterByMimeType) {
+        this.mFilterByMimeType = filterByMimeType;
+    }
+
     @Override
     public boolean filterByMimeType() {
         return mFilterByMimeType;
