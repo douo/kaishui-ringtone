@@ -510,6 +510,37 @@ public class FileUtils {
         }
     };
 
+    public static class MimeTypeFileFilter implements FileFilter{
+        private MimeType mimeType;
+        public MimeTypeFileFilter(String mimeType) throws MimeTypeParseException {
+            super();
+            this.mimeType = new MimeType(mimeType);
+        }
+        @Override
+        public boolean accept(File file) {
+            if(sFileFilter.accept(file)){
+                String type = getMimeType(file);
+                System.out.println(mimeType);
+                System.out.println(file.getName());
+                System.out.println(type+"");
+                try {
+                    if(type!=null&&mimeType.match(type)){
+                        return true;
+                    }else{
+                        return false;
+                    }
+                } catch (MimeTypeParseException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }else {
+                return false;
+            }
+        }
+    };
+
+
+
     /**
      * Get the Intent for selecting content to be used in an Intent Chooser.
      *

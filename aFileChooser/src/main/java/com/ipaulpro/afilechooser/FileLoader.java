@@ -21,8 +21,10 @@ import android.os.FileObserver;
 import android.support.v4.content.AsyncTaskLoader;
 
 import com.ipaulpro.afilechooser.utils.FileUtils;
+import com.ipaulpro.afilechooser.utils.MimeTypeParseException;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,11 +46,17 @@ public class FileLoader extends AsyncTaskLoader<List<File>> {
 
 	private List<File> mData;
 	private String mPath;
-
+    private String mMimeType;
 	public FileLoader(Context context, String path) {
-		super(context);
-		this.mPath = path;
+        this(context,path,null);
 	}
+
+    public FileLoader(Context context, String path,String mimeType) {
+        super(context);
+        this.mPath = path;
+        this.mMimeType = mimeType;
+    }
+
 
 	@Override
 	public List<File> loadInBackground() {
@@ -68,8 +76,21 @@ public class FileLoader extends AsyncTaskLoader<List<File>> {
                 list.add(dir);
         }
 
+
+        FileFilter fileFilter;
+        if(mMimeType == null) {
+            // List file in this directory with the directory filter
+            fileFilter = FileUtils.sFileFilter;
+        }else{
+            try {
+                fileFilter = new FileUtils.MimeTypeFileFilter(mMimeType);
+            } catch (MimeTypeParseException e) {
+                e.printStackTrace();
+                fileFilter = FileUtils.sFileFilter;
+            }
+        }
         // List file in this directory with the file filter
-        final File[] files = pathDir.listFiles(FileUtils.sFileFilter);
+        final File[] files = pathDir.listFiles(fileFilter);
         if (files != null) {
             // Sort the files alphabetically
             Arrays.sort(files, FileUtils.sComparator);

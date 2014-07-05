@@ -30,6 +30,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -61,7 +62,7 @@ public class FileChooserActivity extends FragmentActivity implements
     };
 
     private String mPath;
-
+    private boolean filterByMimeType;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,7 +76,7 @@ public class FileChooserActivity extends FragmentActivity implements
         } else {
             mPath = savedInstanceState.getString(PATH);
         }
-
+        filterByMimeType = true;
         setTitle(mPath);
     }
 
@@ -198,6 +199,16 @@ public class FileChooserActivity extends FragmentActivity implements
             Toast.makeText(FileChooserActivity.this, R.string.error_selecting_file,
                     Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public boolean filterByMimeType() {
+        return filterByMimeType;
+    }
+
+    @Override
+    public String getMimeType() {
+        return getIntent().getType();
     }
 
     /**

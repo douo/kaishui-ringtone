@@ -36,7 +36,6 @@ import java.util.List;
  */
 public class FileListFragment extends ListFragment implements
         LoaderManager.LoaderCallbacks<List<File>> {
-
     /**
      * Interface to listen for events.
      */
@@ -47,13 +46,16 @@ public class FileListFragment extends ListFragment implements
          * @param file The file selected
          */
         public void onFileSelected(File file);
+
+        public boolean filterByMimeType();
+
+        public String getMimeType();
     }
 
     private static final int LOADER_ID = 0;
 
     private FileListAdapter mAdapter;
     private String mPath;
-
     private Callbacks mListener;
 
     /**
@@ -67,7 +69,6 @@ public class FileListFragment extends ListFragment implements
         Bundle args = new Bundle();
         args.putString(FileChooserActivity.PATH, path);
         fragment.setArguments(args);
-
         return fragment;
     }
 
@@ -116,6 +117,13 @@ public class FileListFragment extends ListFragment implements
 
     @Override
     public Loader<List<File>> onCreateLoader(int id, Bundle args) {
+
+        if(mListener.filterByMimeType()){
+            String type = mListener.getMimeType();
+            if(type !=null){
+                return new FileLoader(getActivity(), mPath, type);
+            }
+        }
         return new FileLoader(getActivity(), mPath);
     }
 
