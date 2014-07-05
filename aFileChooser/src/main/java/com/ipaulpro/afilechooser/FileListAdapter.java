@@ -21,9 +21,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,15 +36,15 @@ import java.util.List;
  * @version 2013-12-11
  * @author paulburke (ipaulpro)
  */
-public class FileListAdapter extends BaseAdapter {
+public class FileListAdapter extends BaseAdapter implements Filterable {
 
     private final static int ICON_FOLDER = R.drawable.ic_folder;
     private final static int ICON_FILE = R.drawable.ic_file;
 
     private final LayoutInflater mInflater;
-
+    private FileNameFilter mFilter;
     private List<File> mData = new ArrayList<File>();
-
+    private List<File> mUnfilteredData = mData;
     public FileListAdapter(Context context) {
         mInflater = LayoutInflater.from(context);
     }
@@ -92,7 +95,8 @@ public class FileListAdapter extends BaseAdapter {
      * @param data
      */
     public void setListItems(List<File> data) {
-        mData = data;
+        mData = new ArrayList<File>(data);
+        mUnfilteredData = mData;
         notifyDataSetChanged();
     }
 
@@ -118,4 +122,64 @@ public class FileListAdapter extends BaseAdapter {
         return row;
     }
 
+
+    @Override
+    public Filter getFilter() {
+        if (mFilter == null) {
+            mFilter = new FileNameFilter();
+        }
+        return mFilter;
+    }
+
+    private class FileNameFilter extends Filter {
+
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            FilterResults results = new FilterResults();
+
+            if (constraint == null || constraint.length() == 0) {
+                List<File> list = mUnfilteredData;
+                results.values = list;
+                results.count = list.size();
+            } else {
+                String constraintString = constraint.toString().toUpperCase();
+
+                List<File> unfilteredValues = mUnfilteredData;
+                int count = unfilteredValues.size();
+
+                ArrayList<File> newValues = new ArrayList<File>(
+                        count);
+
+                for (int i = 0; i < count; i++) {
+                    File file = unfilteredValues.get(i);
+                    if (file != null) {
+                        String name = file.getName().toUpperCase();
+                        if (name != null
+                                && name.indexOf(constraintString) != -1) {
+                            newValues.add(file);
+                        }
+                    }
+                }
+
+                results.values = newValues;
+                results.count = newValues.size();
+            }
+
+            return results;
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint,
+                                      FilterResults results) {
+            // noinspection unchecked
+            mData = ((List<File>) results.values);
+
+            if (results.count > 0) {
+                notifyDataSetChanged();
+            } else {
+                notifyDataSetInvalidated();
+            }
+        }
+
+    }
 }

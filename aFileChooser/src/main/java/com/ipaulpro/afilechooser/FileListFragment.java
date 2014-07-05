@@ -17,13 +17,20 @@
 package com.ipaulpro.afilechooser;
 
 import android.app.Activity;
+import android.app.SearchManager;
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.SearchView;
 
 import java.io.File;
 import java.util.List;
@@ -87,7 +94,7 @@ public class FileListFragment extends ListFragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setHasOptionsMenu(true);
         mAdapter = new FileListAdapter(getActivity());
         mPath = getArguments() != null ? getArguments().getString(
                 FileChooserActivity.PATH) : Environment
@@ -109,7 +116,8 @@ public class FileListFragment extends ListFragment implements
     public void onListItemClick(ListView l, View v, int position, long id) {
         FileListAdapter adapter = (FileListAdapter) l.getAdapter();
         if (adapter != null) {
-            File file = (File) adapter.getItem(position);
+            clearFilter();
+            File file = adapter.getItem(position);
             mPath = file.getAbsolutePath();
             mListener.onFileSelected(file);
         }
@@ -130,7 +138,6 @@ public class FileListFragment extends ListFragment implements
     @Override
     public void onLoadFinished(Loader<List<File>> loader, List<File> data) {
         mAdapter.setListItems(data);
-
         if (isResumed())
             setListShown(true);
         else
@@ -140,5 +147,69 @@ public class FileListFragment extends ListFragment implements
     @Override
     public void onLoaderReset(Loader<List<File>> loader) {
         mAdapter.clear();
+    }
+
+    private MenuItem mFilterMenuItem;
+    private SearchView.OnQueryTextListener mOnQueryTextListener = new SearchView.OnQueryTextListener() {
+        public boolean onQueryTextChange(String newText) {
+            if (mAdapter != null) {
+                mAdapter.getFilter().filter(newText);
+            }
+            return true;
+        }
+
+        public boolean onQueryTextSubmit(String query) {
+            if (mAdapter != null) {
+                mAdapter.getFilter().filter(query);
+            }
+            return true;
+        }
+    };
+
+    private void clearFilter(){
+        if(mFilterMenuItem!=null){
+            mFilterMenuItem.collapseActionView();
+            mAdapter.getFilter().filter("");
+        }
+    }
+
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            inflater.inflate(R.menu.file_list, menu);
+            MenuItem item = menu.findItem(R.id.action_filter);
+            item.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+                @Override
+                public boolean onMenuItemActionExpand(MenuItem item) {
+                    SearchView searchView = (SearchView) item.getActionView();
+                    if (null != searchView) {
+                        searchView.setOnQueryTextListener(mOnQueryTextListener);
+                    }
+                    return true;
+                }
+
+                @Override
+                public boolean onMenuItemActionCollapse(MenuItem item){
+                    SearchView searchView = (SearchView) item.getActionView();
+                    if (null != searchView) {
+                        searchView.setOnQueryTextListener(null);
+                        mAdapter.getFilter().filter("");
+                    }
+                    return true;
+                }
+            });
+            SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+            SearchView searchView = (SearchView) item.getActionView();
+            if (null != searchView) {
+                searchView
+                        .setSearchableInfo(searchManager
+                                .getSearchableInfo(getActivity()
+                                        .getComponentName()));
+                searchView.setIconifiedByDefault(false);
+            }
+            mFilterMenuItem = item;
+        }
+        super.onCreateOptionsMenu(menu, inflater);
     }
 }

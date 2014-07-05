@@ -65,15 +65,16 @@ public class FileLoader extends AsyncTaskLoader<List<File>> {
 
         // Current directory File instance
         final File pathDir = new File(mPath);
-
         // List file in this directory with the directory filter
         final File[] dirs = pathDir.listFiles(FileUtils.sDirFilter);
+
         if (dirs != null) {
             // Sort the folders alphabetically
             Arrays.sort(dirs, FileUtils.sComparator);
             // Add each folder to the File list for the list adapter
-            for (File dir : dirs)
+            for (File dir : dirs) {
                 list.add(dir);
+            }
         }
 
 
@@ -95,8 +96,9 @@ public class FileLoader extends AsyncTaskLoader<List<File>> {
             // Sort the files alphabetically
             Arrays.sort(files, FileUtils.sComparator);
             // Add each file to the File list for the list adapter
-            for (File file : files)
+            for (File file : files){
                 list.add(file);
+            }
         }
 
         return list;

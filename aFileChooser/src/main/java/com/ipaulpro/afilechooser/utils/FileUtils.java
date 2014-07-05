@@ -520,9 +520,6 @@ public class FileUtils {
         public boolean accept(File file) {
             if(sFileFilter.accept(file)){
                 String type = getMimeType(file);
-                System.out.println(mimeType);
-                System.out.println(file.getName());
-                System.out.println(type+"");
                 try {
                     if(type!=null&&mimeType.match(type)){
                         return true;
