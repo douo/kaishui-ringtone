@@ -30,7 +30,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -45,7 +44,7 @@ import java.io.File;
  */
 public class FileChooserActivity extends FragmentActivity implements
         OnBackStackChangedListener, FileListFragment.Callbacks {
-
+    public static final String KEY_FILTER_BY_MIME_TYPE = "com.ipaulpro.afilechooser.FileChooserActivity#KEY_FILTER_BY_MIME_TYPE";
     public static final String PATH = "path";
     public static final String EXTERNAL_BASE_PATH = Environment
             .getExternalStorageDirectory().getAbsolutePath();
@@ -62,7 +61,7 @@ public class FileChooserActivity extends FragmentActivity implements
     };
 
     private String mPath;
-    private boolean filterByMimeType;
+    private boolean mFilterByMimeType;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,11 +71,13 @@ public class FileChooserActivity extends FragmentActivity implements
 
         if (savedInstanceState == null) {
             mPath = EXTERNAL_BASE_PATH;
+            mFilterByMimeType = getIntent().getBooleanExtra(KEY_FILTER_BY_MIME_TYPE,false);
             addFragment();
         } else {
+            mFilterByMimeType = savedInstanceState.getBoolean(KEY_FILTER_BY_MIME_TYPE);
             mPath = savedInstanceState.getString(PATH);
         }
-        filterByMimeType = true;
+
         setTitle(mPath);
     }
 
@@ -99,6 +100,7 @@ public class FileChooserActivity extends FragmentActivity implements
         super.onSaveInstanceState(outState);
 
         outState.putString(PATH, mPath);
+        outState.putBoolean(KEY_FILTER_BY_MIME_TYPE, mFilterByMimeType);
     }
 
     @Override
@@ -203,7 +205,7 @@ public class FileChooserActivity extends FragmentActivity implements
 
     @Override
     public boolean filterByMimeType() {
-        return filterByMimeType;
+        return mFilterByMimeType;
     }
 
     @Override
